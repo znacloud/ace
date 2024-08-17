@@ -232,3 +232,5 @@ if __name__ == "__main__":
 
         split_fn = SCENE_SPLIT_FNS[SCENE_SPLIT_TYPES.index(type)]
         convert_colmap_data(extrinsics, intrinsics, frames_dir, scene_dir, split_fn)
+
+    os.system("rm -rf " + scene_name)
