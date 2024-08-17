@@ -2,6 +2,7 @@
 
 import os
 import sys
+import argparse
 import numpy as np
 import shutil
 import colmap_loader as cldr
@@ -13,6 +14,7 @@ from types import SimpleNamespace
 scene_url = "https://sagemaker-studio-163033260074-0o5wme941ix9.s3.ap-southeast-2.amazonaws.com/shelter.zip"
 scene_file = "shelter.zip"
 scene_name = "shelter"
+
 ACE_DIRS = SimpleNamespace(
     train=SimpleNamespace(
         rgb="train/rgb/",
@@ -42,6 +44,44 @@ def train80test20split(idx, image_name, total):
         return ACE_DIRS.test
 
 
+def test20train80split(idx, image_name, total):
+    if idx < total * 0.2:
+        return ACE_DIRS.test
+    else:
+        return ACE_DIRS.train
+
+
+def test_middle_20_split(idx, image_name, total):
+    if idx > total * 0.4 and idx < total * 0.6:
+        return ACE_DIRS.test
+    else:
+        return ACE_DIRS.train
+
+
+def train4test1split(idx, image_name, total):
+    if (idx + 1) % 5 == 0:
+        return ACE_DIRS.test
+    else:
+        return ACE_DIRS.train
+
+
+def train_test_split_random(idx, image_name, total):
+    if np.random.rand() < 0.2:
+        return ACE_DIRS.test
+    else:
+        return ACE_DIRS.train
+
+
+SCENE_SPLIT_FNS = [
+    train80test20split,
+    test20train80split,
+    test_middle_20_split,
+    train4test1split,
+    train_test_split_random,
+]
+SCENE_SPLIT_TYPES = ["t80i20", "i20t80", "i20m", "t4i1", "i20r"]
+
+
 def download_unzip_dataset():
     print("Downloading and unzipping data...")
     os.system("wget " + scene_url)
@@ -63,18 +103,19 @@ def read_colmap_binary_data():
     return camera_poses, camera_calibs
 
 
-def create_ace_dirs():
+def create_ace_dirs(scene_dir):
     print("Creating ACE dir structure...")
-    dutil.mkdir(ACE_DIRS.train.rgb)
-    dutil.mkdir(ACE_DIRS.train.calib)
-    dutil.mkdir(ACE_DIRS.train.pose)
-    dutil.mkdir(ACE_DIRS.test.rgb)
-    dutil.mkdir(ACE_DIRS.test.calib)
-    dutil.mkdir(ACE_DIRS.test.pose)
-    return ACE_DIRS
+    dutil.mkdir(scene_dir + ACE_DIRS.train.rgb)
+    dutil.mkdir(scene_dir + ACE_DIRS.train.calib)
+    dutil.mkdir(scene_dir + ACE_DIRS.train.pose)
+    dutil.mkdir(scene_dir + ACE_DIRS.test.rgb)
+    dutil.mkdir(scene_dir + ACE_DIRS.test.calib)
+    dutil.mkdir(scene_dir + ACE_DIRS.test.pose)
 
 
-def convert_colmap_data(cam_extrinsics, cam_intrinsics, images_folder, mode_dir_fn):
+def convert_colmap_data(
+    cam_extrinsics, cam_intrinsics, images_folder, scene_dir, mode_dir_fn
+):
     for idx, key in enumerate(cam_extrinsics):
         print()
         # the exact output you're looking for:
@@ -105,12 +146,12 @@ def convert_colmap_data(cam_extrinsics, cam_intrinsics, images_folder, mode_dir_
 
         mode_dir = mode_dir_fn(idx, image_file, len(cam_extrinsics))
         # Copy file to rgb dir
-        print(f"Copy {image_path} to {mode_dir.rgb} dir...")
-        shutil.copy2(image_path, mode_dir.rgb)
+        print(f"Copy {image_path} to {scene_dir + mode_dir.rgb} dir...")
+        shutil.copy2(image_path, scene_dir + mode_dir.rgb)
 
         # Write camera pose to pose dir
-        print(f"Write camera pose to {mode_dir.pose} dir...")
-        with open(mode_dir.pose + image_file[:-3] + "txt", "w") as f:
+        print(f"Write camera pose to {scene_dir + mode_dir.pose} dir...")
+        with open(scene_dir + mode_dir.pose + image_file[:-3] + "txt", "w") as f:
             f.write(
                 str(float(inv_cam_pose[0, 0]))
                 + " "
@@ -153,19 +194,41 @@ def convert_colmap_data(cam_extrinsics, cam_intrinsics, images_folder, mode_dir_
             )
 
         # Write calibration to calib dir
-        print(f"Write camera focal length to {mode_dir.calib} dir...")
-        with open(mode_dir.calib + image_file[:-3] + "txt", "w") as f:
+        print(f"Write camera focal length to {scene_dir + mode_dir.calib} dir...")
+        with open(scene_dir + mode_dir.calib + image_file[:-3] + "txt", "w") as f:
             f.write(str(focal_length_x))
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Process COLMAP data and split into train/test sets."
+    )
+    parser.add_argument(
+        "--split_types",
+        type=str,
+        nargs="+",
+        required=False,
+        default=[],
+        choices=SCENE_SPLIT_TYPES,
+        help="Type of train/test split to perform.",
+    )
+    args = parser.parse_args()
+    split_types = args.split_types
+    if not split_types:
+        print("No split types specified, using all types.")
+        split_types = SCENE_SPLIT_TYPES
 
     print("===== Processing " + scene_name + " ===================")
     download_unzip_dataset()
     os.chdir(scene_name)
     extrinsics, intrinsics = read_colmap_binary_data()
 
-    frames_dir = "frames"
-    create_ace_dirs()
+    os.chdir("..")
+    frames_dir = f"{scene_name}/frames"
+    for type in split_types:
+        print("===== Split type: " + type + " ===================")
+        scene_dir = f"{scene_name}_{type}/"
+        create_ace_dirs(scene_dir)
 
-    convert_colmap_data(extrinsics, intrinsics, frames_dir, train80test20split)
+        split_fn = SCENE_SPLIT_FNS[SCENE_SPLIT_TYPES.index(type)]
+        convert_colmap_data(extrinsics, intrinsics, frames_dir, scene_dir, split_fn)
