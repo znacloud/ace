@@ -135,7 +135,7 @@ def convert_ue_data(
 
         # Write camera pose to pose dir
         print(f"Write camera pose to {scene_dir + mode_dir.pose} dir...")
-        with open(scene_dir + mode_dir.pose + image_file[:-3] + "txt", "w") as f:
+        with open(scene_dir + mode_dir.pose + image_file[:-4] + "txt", "w") as f:
             f.write(
                 str(float(cam_pose[0, 0]))
                 + " "
@@ -179,7 +179,7 @@ def convert_ue_data(
 
         # Write calibration to calib dir
         print(f"Write camera focal length to {scene_dir + mode_dir.calib} dir...")
-        with open(scene_dir + mode_dir.calib + image_file[:-3] + "txt", "w") as f:
+        with open(scene_dir + mode_dir.calib + image_file[:-4] + "txt", "w") as f:
             f.write(str(focal_length))
 
 
