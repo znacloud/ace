@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from scipy.spatial.transform import Rotation
 
 
-scene_url = "https://sagemaker-studio-163033260074-0o5wme941ix9.s3.ap-southeast-2.amazonaws.com/shelter.zip"
+scene_url = "https://sagemaker-studio-163033260074-0o5wme941ix9.s3.ap-southeast-2.amazonaws.com/castle.zip"
 scene_file = "castle.zip"
 scene_name = "castle"
 
