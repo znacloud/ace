@@ -27,7 +27,7 @@ ACE_DIRS = SimpleNamespace(
 )
 
 UE_CAMERA_CALIB = SimpleNamespace(
-    fov=60.0, height=1000, width=1500
+    fov=60.0, height=720, width=1080
 )
 
 @dataclass
@@ -43,7 +43,7 @@ class UECameraPose:
 
 
 def getView2World(x,y,z, pitch, roll, yaw):
-    R = Rotation.from_euler('ZYX', [yaw, pitch, roll], degrees=True).as_matrix()
+    R = Rotation.from_euler('YXZ', [pitch, roll, yaw], degrees=True).as_matrix()
 
     Rt = np.zeros((4, 4))
     Rt[:3, :3] = R
@@ -184,7 +184,7 @@ def convert_ue_data(
 
 
 if __name__ == "__main__":
-    
+    np.random.seed(42)
     split_types = SCENE_SPLIT_TYPES
 
     print("===== Processing " + scene_name + " ===================")

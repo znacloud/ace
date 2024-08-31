@@ -132,10 +132,10 @@ class CamLocDataset(Dataset):
             self.coord_files = None
 
         if len(self.rgb_files) != len(self.pose_files):
-            raise RuntimeError('RGB file count does not match pose file count!')
+            raise RuntimeError(f'RGB file count({len(self.rgb_files)}) does not match pose file count({len(self.pose_files)})!')
 
         if len(self.rgb_files) != len(self.calibration_files):
-            raise RuntimeError('RGB file count does not match calibration file count!')
+            raise RuntimeError(f'RGB file count({len(self.rgb_files)}) does not match calibration file count({len(self.calibration_files)})!')
 
         if self.coord_files and len(self.rgb_files) != len(self.coord_files):
             raise RuntimeError('RGB file count does not match coordinate file count!')
