@@ -9,9 +9,9 @@ from types import SimpleNamespace
 from scipy.spatial.transform import Rotation
 
 
-scene_url = "https://sagemaker-studio-163033260074-0o5wme941ix9.s3.ap-southeast-2.amazonaws.com/castle.zip"
-scene_file = "castle.zip"
-scene_name = "castle"
+scene_url = "https://sagemaker-studio-163033260074-0o5wme941ix9.s3.ap-southeast-2.amazonaws.com/castle_p30.zip"
+scene_file = "castle_p30.zip"
+scene_name = "castle_p30"
 
 ACE_DIRS = SimpleNamespace(
     train=SimpleNamespace(
@@ -53,17 +53,20 @@ def getView2World(x,y,z, pitch, roll, yaw):
 
 
 
-def train_test_split_random(idx, image_name, total):
-    if np.random.rand() < 0.2:
+def train_test_split_1(idx, image_name, total):
+    if image_name.startswith("image_n360_r5000"):
+        return ACE_DIRS.train
+    elif image_name.startswith("image_n360_r5500") :
         return ACE_DIRS.test
     else:
-        return ACE_DIRS.train
+        return False
+    
 
 
 SCENE_SPLIT_FNS = [
-    train_test_split_random,
+    train_test_split_1,
 ]
-SCENE_SPLIT_TYPES = ["i20r"]
+SCENE_SPLIT_TYPES = ["seq1"]
 
 
 def download_unzip_dataset():
@@ -121,14 +124,29 @@ def convert_ue_data(
         print()
         # the exact output you're looking for:
         print("Reading camera {}/{}".format(idx + 1, len(cam_extrinsics)))
+        
+        image_file = extr.image_name
+        mode_dir = mode_dir_fn(idx, image_file, len(cam_extrinsics))
+        if not mode_dir:
+            print(f"Skipping {image_file}")
+            continue
 
         focal_length = camera_focals[idx]
 
-        image_file = extr.image_name
+        
         image_path = os.path.join(images_folder, image_file)
-        cam_pose = getView2World(extr.x, extr.y, extr.z, extr.pitch, extr.roll, extr.yaw)
+        # UE Coordinate System: left-handed (Z-Up, X-Forward, Y-Right)
+        # Convert it to COLMAP coordinate system: right-handed (Z-Forward, X-Right, Y-Down)
+        x = extr.y
+        y = -extr.z
+        z = extr.x
+        pitch = extr.yaw
+        roll = -extr.pitch
+        yaw = extr.roll
 
-        mode_dir = mode_dir_fn(idx, image_file, len(cam_extrinsics))
+        cam_pose = getView2World(x, y, z, pitch, roll, yaw)
+
+        
         # Copy file to rgb dir
         print(f"Copy {image_path} to {scene_dir + mode_dir.rgb} dir...")
         shutil.copy2(image_path, scene_dir + mode_dir.rgb)
