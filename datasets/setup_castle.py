@@ -52,21 +52,91 @@ def getView2World(x,y,z, pitch, roll, yaw):
     return np.float32(Rt)
 
 
-
+# seq1 train: r4000
+# seq2 train: r6000
+# seq3 train: r4000, r4500
+# seq4 train: r5500, r6000
+# seq5 train: r4000, r4500, r5500, r6000
+# seq6 train: random50%
+# seq7 train: random100%
+# seq8 train: random100% + seq5
 def train_test_split_1(idx, image_name, total):
     if image_name.startswith("image_n360_r5000"):
-        return ACE_DIRS.train
-    elif image_name.startswith("image_n360_r5500") :
         return ACE_DIRS.test
+    elif image_name.startswith("image_n360_r4000") :
+        return ACE_DIRS.train
     else:
         return False
     
+def train_test_split_2(idx, image_name, total):
+    if image_name.startswith("image_n360_r5000"):
+        return ACE_DIRS.test
+    elif image_name.startswith("image_n360_r6000") :
+        return ACE_DIRS.train
+    else:
+        return False
+    
+def train_test_split_3(idx, image_name, total):
+    if image_name.startswith("image_n360_r5000"):
+        return ACE_DIRS.test
+    elif image_name.startswith("image_n360_r4000") or \
+        image_name.startswith("image_n360_r4500"):
+        return ACE_DIRS.train
+    else:
+        return False
+
+def train_test_split_4(idx, image_name, total):
+    if image_name.startswith("image_n360_r5000"):
+        return ACE_DIRS.test
+    elif image_name.startswith("image_n360_r5500") or \
+        image_name.startswith("image_n360_r6000"):
+        return ACE_DIRS.train
+    else:
+        return False
+    
+def train_test_split_5(idx, image_name, total):
+    if image_name.startswith("image_n360_r5000"):
+        return ACE_DIRS.test
+    elif image_name.startswith("image_n360_"):
+        return ACE_DIRS.train
+    else:
+        return False
+    
+def train_test_split_6(idx, image_name, total):
+    if image_name.startswith("image_n360_r5000"):
+        return ACE_DIRS.test
+    elif not image_name.startswith("image_n360_") and np.random.rand() > 0.5:
+        return ACE_DIRS.train
+    else:
+        return False
+    
+def train_test_split_7(idx, image_name, total):
+    if image_name.startswith("image_n360_r5000"):
+        return ACE_DIRS.test
+    elif not image_name.startswith("image_n360_"):
+        return ACE_DIRS.train
+    else:
+        return False
+    
+def train_test_split_8(idx, image_name, total):
+    if image_name.startswith("image_n360_r5000"):
+        return ACE_DIRS.test
+    else:
+        return ACE_DIRS.train
+
 
 
 SCENE_SPLIT_FNS = [
     train_test_split_1,
+    train_test_split_2,
+    train_test_split_3,
+    train_test_split_4,
+    train_test_split_5,
+    train_test_split_6,
+    train_test_split_7,
+    train_test_split_8,
 ]
-SCENE_SPLIT_TYPES = ["seq1"]
+SCENE_SPLIT_TYPES = ["seq1","seq2","seq3","seq4","seq5","seq6","seq7", "seq8"]
 
 
 def download_unzip_dataset():
@@ -118,7 +188,7 @@ def create_ace_dirs(scene_dir):
 
 
 def convert_ue_data(
-    cam_extrinsics, camera_focals, images_folder, scene_dir, mode_dir_fn
+    cam_extrinsics, camera_focals, image_paths, scene_dir, mode_dir_fn
 ):
     for idx, extr in enumerate(cam_extrinsics):
         print()
@@ -134,7 +204,7 @@ def convert_ue_data(
         focal_length = camera_focals[idx]
 
         
-        image_path = os.path.join(images_folder, image_file)
+        image_path = os.path.join(image_paths[idx], image_file)
         # UE Coordinate System: left-handed (Z-Up, X-Forward, Y-Right)
         # Convert it to COLMAP coordinate system: right-handed (Z-Forward, X-Right, Y-Down)
         x = extr.y
@@ -207,17 +277,24 @@ if __name__ == "__main__":
 
     print("===== Processing " + scene_name + " ===================")
     download_unzip_dataset()
-    os.chdir(scene_name)
+    os.chdir("castle_p30")
+    image_paths = []
     extrinsics, intrinsics = read_ue_capture_data()
+    image_paths.extend(["castle_p30/images" for _ in range(len(extrinsics))])
+    os.chdir("../castle")
+    extmp, intmp = read_ue_capture_data()
+    extrinsics.extend(extmp)
+    intrinsics.extend(intmp)
+    image_paths.extend(["castle/images" for _ in range(len(extrinsics))])
 
     os.chdir("..")
-    frames_dir = f"{scene_name}/images"
+    # frames_dir = f"{scene_name}/images"
     for type in split_types:
         print("===== Split type: " + type + " ===================")
         scene_dir = f"{scene_name}_{type}/"
         create_ace_dirs(scene_dir)
 
         split_fn = SCENE_SPLIT_FNS[SCENE_SPLIT_TYPES.index(type)]
-        convert_ue_data(extrinsics, intrinsics, frames_dir, scene_dir, split_fn)
+        convert_ue_data(extrinsics, intrinsics, image_paths, scene_dir, split_fn)
 
     os.system("rm -rf " + scene_name)
