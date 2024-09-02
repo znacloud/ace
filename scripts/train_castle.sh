@@ -4,7 +4,7 @@
 SCRIPT_PATH=$(dirname $(realpath -s "$0"))
 REPO_PATH=$(realpath -s "${SCRIPT_PATH}/..")
 
-scenes=("castle_seq1")
+scenes=("castle_p30_seq1")
 
 training_exe="${REPO_PATH}/train_ace.py"
 testing_exe="${REPO_PATH}/test_ace.py"
