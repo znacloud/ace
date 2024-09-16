@@ -138,7 +138,7 @@ def read_ue_capture_data():
     # calculate focal length from fov in degree and sensor width
     focal = UE_CAMERA_CALIB.width / (2 * np.tan(UE_CAMERA_CALIB.fov * np.pi / 360))
 
-    camera_file = "paths/semi_sphere_paths.txt"
+    camera_file = "paths/fs_curve_rxxx_paths.txt"
     # read each line from cameara file. 
     # The line is like "image_000001.jpeg, x, y, z, pitch, roll, yaw". 
     # Split each line by comma and convert to UECameraPose objects
