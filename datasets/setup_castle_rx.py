@@ -263,15 +263,10 @@ if __name__ == "__main__":
 
     print("===== Processing " + scene_name + " ===================")
     download_unzip_dataset()
-    os.chdir("castle_p30")
+    os.chdir(scene_name)
     image_paths = []
     extrinsics, intrinsics = read_ue_capture_data()
-    image_paths.extend(["castle_p30/images" for _ in range(len(extrinsics))])
-    os.chdir("../castle")
-    extmp, intmp = read_ue_capture_data()
-    extrinsics.extend(extmp)
-    intrinsics.extend(intmp)
-    image_paths.extend(["castle/images" for _ in range(len(extrinsics))])
+    image_paths.extend([f"{scene_name}/images" for _ in range(len(extrinsics))])
 
     os.chdir("..")
     # frames_dir = f"{scene_name}/images"
