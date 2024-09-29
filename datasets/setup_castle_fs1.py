@@ -11,7 +11,7 @@ from scipy.spatial.transform import Rotation
 
 scene_url = "https://sagemaker-studio-163033260074-0o5wme941ix9.s3.ap-southeast-2.amazonaws.com/castle_rx.zip"
 scene_file = "castle_rx.zip"
-scene_name = "castle_rx"
+scene_name = "castle_fs"
 
 ACE_DIRS = SimpleNamespace(
     train=SimpleNamespace(
