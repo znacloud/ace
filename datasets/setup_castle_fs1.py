@@ -11,7 +11,7 @@ from scipy.spatial.transform import Rotation
 
 scene_url = "https://sagemaker-studio-163033260074-0o5wme941ix9.s3.ap-southeast-2.amazonaws.com/castle_rx.zip"
 scene_file = "castle_rx.zip"
-scene_name = "castle_fs"
+scene_name = "castle_rx"
 
 ACE_DIRS = SimpleNamespace(
     train=SimpleNamespace(
@@ -52,77 +52,31 @@ def getView2World(x,y,z, pitch, roll, yaw):
     return np.float32(Rt)
 
 
-# test set: curve_path_r5000_1 + curve_path_r5000_2
-# t_base - baseline train: curve_path_r5000_3 + cp_r5000_4 + cp_r5000_5
-# t_s1: cp_r4500_3 + cp_r5000_4 + cp_r5500_5
-# t_s2: fs_poses_r5000_s2 + fs_poses_r5000_s4
-# t_s3: fs_poses_r4500_s1 + fs_poses_r5500_s3
-# t_s4: fs_poses_r5000_sx (20-30m height)
-# t_s5: fs_poses_r4500_s1 + fs_poses_r5000_s2 + fs_poses_r5000_s4 + fs_poses_r5500_s3 (20-30m height)
+# t_ts: test set: fs_poses_r5000_s1
+# t_n1 - first point of fs_poses_r5000_s1
+# t_nx - x number points of fs_poses_r5000_s1 whose errors are larger than 5degree/5cm
 
-def train_test_split_base(idx, image_name, total, pose=[0,0,0]):
-    if image_name.startswith("image_r5000_c1") or image_name.startswith("image_r5000_c2"):
+def train_test_split_ts(idx, image_name, total, pose=[0,0,0]):
+    if image_name.startswith("image_fs_r5000_s1"):
         return ACE_DIRS.test
-    elif image_name.startswith("image_r5000_c3") or image_name.startswith("image_r5000_c4") or image_name.startswith("image_r5000_c5") :
-        return ACE_DIRS.train
     else:
         return False
     
-def train_test_split_1(idx, image_name, total, pose=[0,0,0]):
-    if image_name.startswith("image_r5000_c1") or image_name.startswith("image_r5000_c2"):
-        return ACE_DIRS.test
-    elif image_name.startswith("image_r4500_c3") or image_name.startswith("image_r5000_c4") or image_name.startswith("image_r5500_c5") :
+def train_test_split_n1(idx, image_name, total, pose=[0,0,0]):
+    # Only one image in train folder
+    if image_name.startswith("image_fs_r5000_s1_00000.jpeg"):
         return ACE_DIRS.train
     else:
         return False
-    
-def train_test_split_2(idx, image_name, total, pose=[0,0,0]):
-    if image_name.startswith("image_r5000_c1") or image_name.startswith("image_r5000_c2"):
-        return ACE_DIRS.test
-    elif image_name.startswith("image_fs_r5000_s2") or image_name.startswith("image_fs_r5000_s4"):
-        return ACE_DIRS.train
-    else:
-        return False
-
-def train_test_split_3(idx, image_name, total, pose=[0,0,0]):
-    if image_name.startswith("image_r5000_c1") or image_name.startswith("image_r5000_c2"):
-        return ACE_DIRS.test
-    elif image_name.startswith("image_fs_r4500_s1") or image_name.startswith("image_fs_r5500_s3"):
-        return ACE_DIRS.train
-    else:
-        return False
-    
-def train_test_split_4(idx, image_name, total, pose=[0,0,0]):
-    if image_name.startswith("image_r5000_c1") or image_name.startswith("image_r5000_c2"):
-        return ACE_DIRS.test
-    elif image_name.startswith("image_fs_r5000_") and pose[2] >= 20 and pose[2] <=30: #meters
-        return ACE_DIRS.train
-    else:
-        return False
-    
-def train_test_split_5(idx, image_name, total, pose=[0,0,0]):
-    if image_name.startswith("image_r5000_c1") or image_name.startswith("image_r5000_c2"):
-        return ACE_DIRS.test
-    elif (image_name.startswith("image_fs_r4500_s1") or image_name.startswith("image_fs_r5000_s2") \
-        or image_name.startswith("image_fs_r5000_s4") or image_name.startswith("image_fs_r5500_s3")) \
-        and pose[2] >= 20 and pose[2] <=30: #meters
-        return ACE_DIRS.train
-    else:
-        return False
-    
+ 
 
 
 
 SCENE_SPLIT_FNS = [
-    train_test_split_base,
-    train_test_split_1,
-    train_test_split_2,
-    train_test_split_3,
-    train_test_split_4,
-    train_test_split_5,
-    
+    train_test_split_ts,
+    train_test_split_n1,
 ]
-SCENE_SPLIT_TYPES = ["tbase","ts1","ts2","ts3","ts4","ts5"]
+SCENE_SPLIT_TYPES = ["ts","n1"]
 
 
 def download_unzip_dataset():
