@@ -97,6 +97,7 @@ while train_scene != None:
         # For all image_name in pose_dp, copy the corresponding image to next_train_scene folder
         print(f"Copy images in pose_dp to {next_train_scene}")
         for image_name in pose_dp["file_name"]:
+            image_names_in_train.append(image_name)
             subprocess.run(["cp", os.path.join(datasets_folder, test_scene, ACE_DIRS.test.rgb, image_name),
                             os.path.join(next_train_dir, ACE_DIRS.train.rgb)], check=True)
             subprocess.run(["cp", os.path.join(datasets_folder, test_scene, ACE_DIRS.test.calib, image_name[:-4] + "txt"),
