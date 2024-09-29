@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import subprocess
 import pandas as pd
@@ -48,21 +50,24 @@ while train_scene != None:
 
     # Execute training
     subprocess.run(train_command, check=True)
+    subprocess.run(test_command, check=True)
 
-    # Execute testing and log output
-    log_file_path = os.path.join(out_dir, f"log_{train_scene}.txt")
-    with open(log_file_path, "w") as log_file:
-        subprocess.run(test_command, stdout=log_file, stderr=subprocess.STDOUT, check=True)
+    # # Execute testing and log output
+    # log_file_path = os.path.join(out_dir, f"log_{train_scene}.txt")
+    # with open(log_file_path, "w") as log_file:
+    #     subprocess.run(test_command, stdout=log_file, stderr=subprocess.STDOUT, check=True)
 
-    with open(log_file_path, "r") as log_file:
-        log_lines = log_file.readlines()
-        if len(log_lines) >= 5:
-            print(f"{train_scene}: {log_lines[-5].strip()}")
+    # with open(log_file_path, "r") as log_file:
+    #     log_lines = log_file.readlines()
+    #     if len(log_lines) >= 5:
+    #         print(f"{train_scene}: {log_lines[-5].strip()}")
 
     # Read pose file and check the errors
     pose_file_path = os.path.join(out_dir, f"poses_{test_scene}_.txt")
     print(f"Read pose file {pose_file_path}")
     pose_dp = read_pose_data(pose_file_path)
+    # Rename file to f"pose_{train_scene}_.txt" 
+    os.rename(pose_file_path, os.path.join(out_dir, f"pose_{train_scene}_.txt"))
     
     # Filter out the rows where image_name is already in image_names_in_train array
     pose_dp = pose_dp[~pose_dp["file_name"].isin(image_names_in_train)]
@@ -99,7 +104,10 @@ while train_scene != None:
             subprocess.run(["cp", os.path.join(datasets_folder, test_scene, ACE_DIRS.test.pose, image_name[:-4] + "txt"),
                             os.path.join(next_train_dir, ACE_DIRS.train.pose)], check=True)
 
-        train_scene = next_train_scene 
+        train_scene = next_train_scene
+    else:
+        train_scene = None
+        print("No more scenes to train.")
 
     
 
