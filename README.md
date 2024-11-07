@@ -60,6 +60,22 @@ python setup.py install
 
 Having done the steps above, you are ready to experiment with ACE!
 
+## Extra Datasets (Added by Nianan)
+Extended experiments have been conducted to evaluate the ACE method using the following extra datasets. We provide scripts in the datasets folder to automatically download and extract the data in a format that can be readily used by the ACE scripts. 
+- BlackSofa
+  - script: `datasets/setup_blacksofa.py`
+- Shelter
+  - script: `datasets/setup_shelter.py`
+- Castle
+  - script: `datasets/setup_castle.py`
+- Castle (Extended):
+  - script: `datasets/setup_castle_{rx,fs1}.py`
+
+
+
+
+
+
 ## Datasets
 
 The ACE method has been evaluated using multiple published datasets:
